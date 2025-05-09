@@ -16,7 +16,7 @@ db = mysql.connector.connect(
 cursor = db.cursor()
 
 while True:
-    line = ser.readline().decode('utf-8').strip()
+    line = ser.readline().decode('utf-8', errors='ignore').strip()
 
     if line.startswith("PASSWORD:"):
         entered_password = line.split(":")[1]

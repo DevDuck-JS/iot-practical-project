@@ -140,6 +140,8 @@ void loop(){
           }
         }
 
+        newCode[newCodeCount] = '\0'; // Null-terminate the string
+
         // Send change request to Python
         Serial.print("CHANGE:");
         Serial.print(userType);  // Admin or Residence
@@ -147,6 +149,12 @@ void loop(){
         Serial.println(newCode);
         lcd.clear();
         lcd.print("Code Updated");
+        delay(2000);
+      }
+
+      else if (changeChoice == '0'){
+        lcd.clear();
+        lcd.print("You're logged out");
         delay(2000);
       }
     }
