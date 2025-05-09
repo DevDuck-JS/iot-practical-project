@@ -77,100 +77,7 @@ void setup(){
 
 void loop(){
 
-  // Initialize LCD and print
-  lcd.setCursor(0, 0);
-  lcd.print("Enter 7-Digit Code:");
-
-  // Get key value if pressed
-  char customKey = customKeypad.getKey();
-  
-  if (customKey) {
-    // Enter keypress into array and increment counter
-    Data[data_count] = customKey;
-    lcd.setCursor(data_count, 4);
-    lcd.print(Data[data_count]);
-    data_count++;
-  }
-
-  // See if we have reached the password length
- 
-  if (data_count == Password_Length - 1) {
-    lcd.clear();
-    Serial.print("PASSWORD:");
-    Serial.println(Data);  // Send password to Python
-    delay(1000); // Wait for Python to respond
-
-    while (!Serial.available()); // Wait until response
-    String userType = Serial.readStringUntil('\n');
-
-    if (userType == "Admin" || userType == "Residence") {
-      lcd.print("Welcome, " + userType);
-      digitalWrite(ledGreen, HIGH);
-      delay(2000);
-      lcd.clear();
-
-      // 🔐 Ask if they want to change password
-      lcd.print("Change code?");
-      lcd.setCursor(0, 1);
-      lcd.print("1=Yes 0=No");
-
-      bool decisionMade = false;
-      char changeChoice;
-
-      while (!decisionMade) {
-        changeChoice = customKeypad.getKey();
-        if (changeChoice == '1' || changeChoice == '0') {
-          decisionMade = true;
-        }
-      }
-
-      if (changeChoice == '1') {
-        lcd.clear();
-        lcd.print("New 7-Digit Code:");
-        char newCode[Password_Length];
-        byte newCodeCount = 0;
-
-        while (newCodeCount < Password_Length - 1) {
-          char key = customKeypad.getKey();
-          if (key) {
-            newCode[newCodeCount] = key;
-            lcd.setCursor(newCodeCount, 1);
-            lcd.print(key);
-            newCodeCount++;
-          }
-        }
-
-        newCode[newCodeCount] = '\0'; // Null-terminate the string
-
-        // Send change request to Python
-        Serial.print("CHANGE:");
-        Serial.print(userType);  // Admin or Residence
-        Serial.print(":");
-        Serial.println(newCode);
-        lcd.clear();
-        lcd.print("Code Updated");
-        delay(2000);
-      }
-
-      else if (changeChoice == '0'){
-        lcd.clear();
-        lcd.print("You're logged out");
-        delay(2000);
-      }
-    }
-    else {
-      lcd.print("Access Denied");
-      digitalWrite(ledRed, HIGH);
-      delay(2000);
-    }
-
-
-    delay(2000);
-    lcd.clear();
-    clearData();
-  }
-  
-
+  // Ultrasobnix sensor
   digitalWrite(trigPin, LOW);
   delayMicroseconds(2);
   digitalWrite(trigPin, HIGH);
@@ -184,15 +91,133 @@ void loop(){
   Serial.print(distance);
   Serial.println(" cm");
 
-  if (distance < 20) {
-    digitalWrite(buzzerPin, HIGH);        // Buzzer beeps
-    digitalWrite(ledBlue, 1);             // LED ON: Blue 
+  if (distance > 20) {
+    digitalWrite(buzzerPin, LOW);        // Buzzer Silence
+    digitalWrite(ledBlue, 0);             // LED OFF: Blue 
+    lcd.setCursor(0, 0);
+    lcd.print("Approach to activate");
     delay(100);
   } else {
-    digitalWrite(buzzerPin, LOW);         // Buzzer silence
-    digitalWrite(ledBlue, 0);             // LED OFF: Blue 
-  }
+    digitalWrite(ledBlue, 1);             // LED ON: Blue 
 
+    // Initialize LCD and print
+    lcd.setCursor(0, 0);
+    lcd.print("Enter 7-Digit Code:");
+  
+    // Get key value if pressed
+    char customKey = customKeypad.getKey();
+    
+    if (customKey) {
+      // Enter keypress into array and increment counter
+      Data[data_count] = customKey;
+      lcd.setCursor(data_count, 4);
+      lcd.print(Data[data_count]);
+      data_count++;
+    }
+
+    // See if we have reached the password length
+  
+    if (data_count == Password_Length - 1) {
+      lcd.clear();
+      Serial.print("PASSWORD:");
+      Serial.println(Data);         // Send password to Python
+      delay(1000);                  // Wait for Python to respond
+
+      while (!Serial.available()); // Wait until response
+      String userType = Serial.readStringUntil('\n');
+
+      if (userType == "Admin" || userType == "Residence") {
+        lcd.print("Welcome, " + userType);
+        digitalWrite(buzzerPin, HIGH);            // Buzzer beeps
+        digitalWrite(ledRed, 0);                  // LED ON: Red 
+        digitalWrite(ledGreen, 1);                // LED ON: Green 
+        digitalWrite(ledBlue, 0);                 // LED OFF: Blue 
+        delay(2000);
+        digitalWrite(buzzerPin, LOW);             // Buzzer silence
+        lcd.clear();
+        
+
+        // Ask if they want to change password
+        lcd.print("Change code?");
+        lcd.setCursor(0, 1);
+        lcd.print("1=Yes 0=No");
+
+        bool decisionMade = false;
+        char changeChoice;
+
+        while (!decisionMade) {
+          changeChoice = customKeypad.getKey();
+          if (changeChoice == '1' || changeChoice == '0') {
+            decisionMade = true;
+          }
+        }
+
+        if (changeChoice == '1') {
+          lcd.clear();
+          lcd.print("New 7-Digit Code:");
+          char newCode[Password_Length];
+          byte newCodeCount = 0;
+
+          while (newCodeCount < Password_Length - 1) {
+            char key = customKeypad.getKey();
+            if (key) {
+              newCode[newCodeCount] = key;
+              lcd.setCursor(newCodeCount, 1);
+              lcd.print(key);
+              newCodeCount++;
+            }
+          }
+
+          newCode[newCodeCount] = '\0';       // Null-terminate the string
+
+          // Send change request to Python
+          Serial.print("CHANGE:");
+          Serial.print(userType);             // Admin or Residence
+          Serial.print(":");
+          Serial.println(newCode);
+          lcd.clear();
+          lcd.print("Code Updated");
+          digitalWrite(buzzerPin, HIGH);         // Buzzer beeps
+
+          digitalWrite(ledRed, 0);                // LED ON: Red 
+          digitalWrite(ledGreen, 1);             // LED ON: Green 
+          digitalWrite(ledBlue, 0);               // LED OFF: Blue 
+          delay(2000);
+        }
+
+        else if (changeChoice == '0'){
+          lcd.clear();
+          lcd.print("You're logged out");
+          delay(2000);
+        }
+      }
+      else {
+        lcd.print("Access Denied");
+        digitalWrite(buzzerPin, HIGH);          // Buzzer beeps
+        delay(200);
+        digitalWrite(buzzerPin, LOW);           // Buzzer beeps
+        delay(200);
+        digitalWrite(buzzerPin, HIGH);          // Buzzer beeps
+        delay(200);
+        digitalWrite(buzzerPin, LOW);           // Buzzer beeps
+        delay(200);
+        digitalWrite(ledRed, 1);                // LED ON: Red 
+        digitalWrite(ledGreen, 0);              // LED OFF: Green 
+        digitalWrite(ledBlue, 0);               // LED OFF: Blue 
+        delay(2000);
+      }
+
+      delay(2000);
+
+      // Reset everything
+      lcd.clear();
+      clearData();
+      digitalWrite(buzzerPin, LOW);           // Buzzer beeps
+      digitalWrite(ledRed, 0);                // LED OFF: Red 
+      digitalWrite(ledGreen, 0);              // LED OFF: Green 
+      digitalWrite(ledBlue, 0);               // LED OFF: Blue 
+    }
+  }
   delay(100);
 }
 
