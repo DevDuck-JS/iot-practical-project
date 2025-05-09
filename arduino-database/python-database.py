@@ -1,6 +1,8 @@
+import requests
 import serial
 import mysql.connector
 from datetime import datetime
+
 
 # Open serial connection (adjust to your port)
 ser = serial.Serial('/dev/cu.usbmodem1201', 9600, timeout=1)  # Use COMx for Windows
@@ -15,6 +17,15 @@ db = mysql.connector.connect(
 
 cursor = db.cursor()
 
+# Fetch initial threshold from database
+cursor.execute("SELECT distance FROM trigger_threshold ORDER BY update_at DESC LIMIT 1")
+result = cursor.fetchone()
+if result:
+    initial_threshold = result[0]
+    print("Sending threshold to Arduino:", initial_threshold)
+    ser.write(f"THRESHOLD:{initial_threshold}\n".encode())
+
+
 while True:
     line = ser.readline().decode('utf-8', errors='ignore').strip()
 
@@ -26,8 +37,10 @@ while True:
         result = cursor.fetchone()
 
         if result:
+
             user_type = result[0]
             print("Matched user_type:", user_type)
+
 
             timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             cursor.execute(
@@ -35,6 +48,7 @@ while True:
                 (user_type, timestamp)
             )
             db.commit()
+
         else:
             user_type = "Denied"
             print("Password not correct.")
@@ -65,3 +79,9 @@ while True:
         except Exception as e:
             print("Error processing change request:", e)
 
+    elif line.startswith("DISTANCE:"):
+        try:
+            distance_val = line.split(":")[1]
+            print("Distance: " + distance_val + " cm.")
+        except IndexError:
+            print("Malformed distance data.")

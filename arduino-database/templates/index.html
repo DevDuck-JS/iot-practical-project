@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Welcome</title>
+  <style>
+    body { font-family: Arial; text-align: center; margin-top: 20%; }
+  </style>
+  <script>
+    // Check every 2 seconds if we should redirect
+    setInterval(() => {
+      fetch('/check-unlocked')
+        .then(res => res.json())
+        .then(data => {
+          if (data.unlocked) {
+            window.location.href = '/dashboard';
+          }
+        });
+    }, 2000);
+  </script>
+</head>
+<body>
+  <h2>🔐 Approach the Ultrasonic sensor and enter your 7-digit code using the keypad</h2>
+
+  <form action="/go-to-dashboard" method="POST">
+    <button type="submit" class="btn btn-primary mt-4">Go to Dashboard</button>
+  </form>
+</body>
+</html>
