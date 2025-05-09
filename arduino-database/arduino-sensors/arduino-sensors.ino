@@ -82,7 +82,7 @@ void setup(){
 
 void loop(){
 
-  // ✅ Listen for commands from Flask
+  // Listen for commands from Flask
   if (Serial.available()) {
     String command = Serial.readStringUntil('\n');
 
