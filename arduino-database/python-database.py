@@ -17,16 +17,51 @@ cursor = db.cursor()
 
 while True:
     line = ser.readline().decode('utf-8').strip()
-    if line:
-        print("Received:", line)
 
-        if line.startswith("ACCESS:"):
-            access_type = line.split(":")[1]
+    if line.startswith("PASSWORD:"):
+        entered_password = line.split(":")[1]
+        print("Received password:", entered_password)
+
+        cursor.execute("SELECT user_type FROM user WHERE password = %s LIMIT 1", (entered_password,))
+        result = cursor.fetchone()
+
+        if result:
+            user_type = result[0]
+            print("Matched user_type:", user_type)
+
             timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-
-            sql = "INSERT INTO access_log (user_type, access_time) VALUES (%s, %s)"
-            val = (access_type, timestamp)
-
-            cursor.execute(sql, val)
+            cursor.execute(
+                "INSERT INTO access_log (user_type, access_time) VALUES (%s, %s)",
+                (user_type, timestamp)
+            )
             db.commit()
-            print("Logged to DB:", val)
+        else:
+            user_type = "Denied"
+            print("Password not correct.")
+
+        # Send response to Arduino
+        ser.write((user_type + "\n").encode())
+
+    elif line.startswith("CHANGE:"):
+        try:
+            _, user_type, new_password = line.split(":")
+            now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+            cursor.execute(
+                "UPDATE user SET password = %s, update_at = %s WHERE user_type = %s",
+                (new_password, now, user_type)
+            )
+            db.commit()
+
+            # Optional: log the change in access_log table
+            cursor.execute(
+                "INSERT INTO access_log (user_type, access_time) VALUES (%s, %s)",
+                (f"{user_type} (changed password)", now)
+            )
+            db.commit()
+
+            print(f"{user_type}'s password updated to {new_password} at {now}")
+
+        except Exception as e:
+            print("Error processing change request:", e)
+
