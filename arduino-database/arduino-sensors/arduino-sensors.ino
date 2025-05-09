@@ -5,6 +5,11 @@
 // Include Keypad library
 #include <Keypad.h>
 
+
+// Ultrasonic initial trigger
+int triggerThreshold = 20;  // default threshold
+
+
 // Length of password + 1 for null character
 #define Password_Length 8
 // Character to hold password input
@@ -77,6 +82,25 @@ void setup(){
 
 void loop(){
 
+  // ✅ Listen for commands from Flask
+  if (Serial.available()) {
+    String command = Serial.readStringUntil('\n');
+
+    if (command == "BUZZER:ON") {
+      digitalWrite(buzzerPin, HIGH);
+      delay(1000);
+      digitalWrite(buzzerPin, LOW);
+    }
+
+    if (command.startsWith("THRESHOLD:")) {
+      String value = command.substring(10);
+      triggerThreshold = value.toInt();
+      Serial.print("Threshold updated to: ");
+      Serial.println(triggerThreshold);
+    }
+  }
+
+
   // Ultrasobnix sensor
   digitalWrite(trigPin, LOW);
   delayMicroseconds(2);
@@ -87,11 +111,10 @@ void loop(){
   duration = pulseIn(echoPin, HIGH);
   distance = duration * 0.0344 / 2;
 
-  Serial.print("Distance: ");
-  Serial.print(distance);
-  Serial.println(" cm");
+  Serial.print("DISTANCE:");
+  Serial.println(distance);
 
-  if (distance > 20) {
+  if (distance > triggerThreshold) {
     digitalWrite(buzzerPin, LOW);        // Buzzer Silence
     digitalWrite(ledBlue, 0);             // LED OFF: Blue 
     lcd.setCursor(0, 0);

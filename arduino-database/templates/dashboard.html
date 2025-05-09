@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Arduino Security Dashboard</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="container mt-4">
+  <h2>Access Log</h2>
+  <table class="table table-bordered">
+    <thead>
+      <tr><th>ID</th><th>User Type</th><th>Access Time</th></tr>
+    </thead>
+    <tbody>
+      {% for log in logs %}
+      <tr>
+        <td>{{ log.id }}</td>
+        <td>{{ log.user_type }}</td>
+        <td>{{ log.access_time }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <form action="/refresh-log" method="POST" class="mt-2 mb-4">
+    <button type="submit" class="btn btn-outline-primary">Refresh Log</button>
+  </form>
+
+
+  <hr>
+  <h4>Control Panel</h4>
+  <form action="/trigger-buzzer" method="POST">
+    <button type="submit" class="btn btn-danger">Trigger Buzzer</button>
+  </form>
+
+  <hr>
+  <h4>Current Distance Threshold: <strong>{{ threshold }} cm</strong></h4>
+
+  <form action="/set-threshold" method="POST" class="mt-3">
+    <label>Set Distance Threshold (cm):</label>
+    <input type="number" name="threshold" required>
+    <button type="submit" class="btn btn-primary">Update Threshold</button>
+  </form>
+</body>
+</html>
